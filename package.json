@@ -1,0 +1,18 @@
+{
+  "name": "ai-builder-digest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI Builders daily digest static site — auto-generated, deployed to GitHub Pages.",
+  "scripts": {
+    "prepare": "node scripts/prepare-digest.js",
+    "remix": "node scripts/remix.mjs",
+    "build": "node scripts/build-site.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "marked": "^12.0.0",
+    "proper-lockfile": "^4.1.0"
+  }
+}
