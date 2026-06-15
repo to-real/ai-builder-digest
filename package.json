@@ -5,7 +5,7 @@
   "type": "module",
   "description": "AI Builders daily digest static site — auto-generated, deployed to GitHub Pages.",
   "scripts": {
-    "prepare": "node scripts/prepare-digest.js",
+    "feed": "node scripts/prepare-digest.js",
     "remix": "node scripts/remix.mjs",
     "build": "node scripts/build-site.mjs",
     "test": "node --test"
