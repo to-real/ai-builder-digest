@@ -1,0 +1,60 @@
+name: Daily Digest
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # UTC 00:00 = Beijing 08:00
+  workflow_dispatch:       # 允许手动触发
+
+permissions:
+  contents: write     # commit digests back
+  pages: write
+  id-token: write     # deploy-pages
+
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Prepare feed
+        run: |
+          mkdir -p "$HOME/.follow-builders"
+          printf '{"language":"bilingual","delivery":{"method":"stdout"}}' > "$HOME/.follow-builders/config.json"
+          node scripts/prepare-digest.js > feed.json
+
+      - name: Remix with GLM
+        env:
+          ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+        run: node scripts/remix.mjs feed.json
+
+      - name: Build site
+        run: node scripts/build-site.mjs
+
+      - name: Commit new digest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add digests/
+          git commit -m "digest: $(date -u +%F)" || echo "no new digest to commit"
+          git push
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
