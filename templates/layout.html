@@ -17,6 +17,11 @@
     <nav><a href="archive.html">归档</a></nav>
   </div>
 </header>
+<div class="lang-toggle">
+  <button data-lang="both" class="active">双语</button>
+  <button data-lang="zh">中文</button>
+  <button data-lang="en">EN</button>
+</div>
 <main class="wrap">
 {{main}}
 </main>
@@ -25,5 +30,18 @@
     每日自动生成 · 数据来自 <a href="https://github.com/zarazhangrui/follow-builders">follow-builders</a> · 双语对照
   </div>
 </footer>
+<script>
+(function(){
+  var t = document.querySelector('.lang-toggle');
+  if(!t) return;
+  function setLang(l){
+    document.body.className = l==='en'?'lang-en':l==='zh'?'lang-zh':'';
+    t.querySelectorAll('button').forEach(function(b){b.classList.toggle('active', b.dataset.lang===l);});
+    localStorage.setItem('digest-lang', l);
+  }
+  t.querySelectorAll('button').forEach(function(b){b.addEventListener('click', function(){setLang(b.dataset.lang);});});
+  setLang(localStorage.getItem('digest-lang') || 'both');
+})();
+</script>
 </body>
 </html>

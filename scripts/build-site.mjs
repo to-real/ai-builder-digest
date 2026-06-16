@@ -17,9 +17,17 @@ export function slugDate(filename) {
 // Post-process marked HTML: drop the duplicate digest-date <h1> (the page already
 // shows the title) and tag source-link paragraphs (lines starting with →) for styling.
 function enhanceHtml(html) {
-  return html
+  let out = html
     .replace(/<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '')
     .replace(/<p>→\s/g, '<p class="src">→ ');
+  // tag each <p> with lang (zh if it contains CJK, else en) for the EN/中文 toggle.
+  // skip paragraphs that already have lang or are source-link lines.
+  out = out.replace(/<p(\s[^>]*)?>([\s\S]*?)<\/p>/g, (m, attrs, inner) => {
+    if (attrs && (/lang=|class="src"/.test(attrs))) return m;
+    const lang = /[一-鿿]/.test(inner) ? 'zh' : 'en';
+    return `<p${attrs || ''} lang="${lang}">${inner}</p>`;
+  });
+  return out;
 }
 
 async function loadPosts(digestsDir) {
