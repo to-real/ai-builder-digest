@@ -69,6 +69,7 @@ export function buildSystemPrompt(prompts) {
     '- BANNED filler: "This represents a generalization of...", "underscores...", "fundamentally changing how...", "highlights that", "notes that", "emphasizes that". Rewrite every one.',
     '- THIN CONTENT: a reshare/like with no original take → ONE line OR SKIP the builder. Do not pad. Fewer dense entries beat many empty ones.',
     '- Chinese = information-equivalent REWRITE, not literal translation. "generalization of meta-prompting" → "agent 不再被固定 prompt 限制，能自己定义任务".',
+    '- ROLE LINE: from the bio field extract ONLY title + primary company, formatted as "Title, Company". Strip ALL urls, emojis, slogans, mottos, side projects. Examples: "ceo @replit. civilizationist" → "CEO, Replit"; "President & CEO @ycombinator —Founder @garryslist—Creator of GStack & GBrain..." → "President & CEO, Y Combinator"; "achieve ambition with intentionality... affiliations: @dxtipshq, @cognition, @latentspacepod" → "AI Engineer, Latent Space". If bio has no clear role, use the builder\'s best-known public role.',
     '',
     'THEME MERGING (raise density):',
     '- If 2+ builders independently make the SAME point today, MERGE into ONE themed module instead of separate entries:',
