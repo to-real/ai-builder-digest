@@ -186,3 +186,21 @@ body.lang-zh [lang="en"] { display: none; }
   background: var(--ivory); white-space: nowrap;
 }
 .chip:hover { border-color: var(--brand); color: var(--brand); }
+
+/* === per-item share button + podcast collapse === */
+.digest-body h2 { position: relative; padding-right: 30px; }
+.digest-body h2 .share {
+  position: absolute; right: 0; top: 2px;
+  background: none; border: none; cursor: pointer;
+  font-size: 13px; opacity: 0.3; padding: 0 4px; color: var(--stone);
+}
+.digest-body h2 .share:hover { opacity: 1; color: var(--brand); }
+.podcast-section { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 4px; }
+.podcast-section > summary {
+  font-size: 12px; letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--brand); font-weight: 500; cursor: pointer; list-style: none; padding: 12px 0;
+}
+.podcast-section > summary::-webkit-details-marker { display: none; }
+.podcast-section > summary::before { content: "▶ "; font-size: 9px; }
+.podcast-section[open] > summary::before { content: "▼ "; }
+.podcast-section[open] > summary { margin-bottom: 16px; }

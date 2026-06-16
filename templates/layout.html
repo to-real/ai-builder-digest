@@ -14,7 +14,7 @@
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="index.html"><span class="brand-mark">·</span> AI Builders Daily</a>
-    <nav><a href="archive.html">归档</a></nav>
+    <nav><a href="archive.html">归档</a> · <a href="about.html">关于</a></nav>
   </div>
 </header>
 <div class="lang-toggle">
@@ -42,6 +42,25 @@
   t.querySelectorAll('button').forEach(function(b){b.addEventListener('click', function(){setLang(b.dataset.lang);});});
   setLang(localStorage.getItem('digest-lang') || 'both');
 })();
+</script>
+<script>
+document.querySelectorAll('.share').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    var base = location.href.split('#')[0];
+    navigator.clipboard.writeText(base + '#' + btn.dataset.slug).then(function(){
+      var orig = btn.textContent; btn.textContent = '✓';
+      setTimeout(function(){ btn.textContent = orig; }, 1200);
+    });
+  });
+});
+function openSectionForHash(){
+  if(!location.hash) return;
+  var t = document.querySelector(location.hash);
+  if(t){ var d = t.closest('.podcast-section'); if(d) d.open = true; }
+}
+openSectionForHash();
+window.addEventListener('hashchange', openSectionForHash);
 </script>
 </body>
 </html>

@@ -35,8 +35,12 @@ function enhanceHtml(html) {
     let slug = slugify(inner);
     while (seen.has(slug)) slug = `${slugify(inner)}-${++n}`;
     seen.add(slug);
-    return `<h2${attrs} id="${slug}">${inner}</h2>`;
+    return `<h2${attrs} id="${slug}">${inner}<button class="share" data-slug="${slug}" title="复制本条链接" aria-label="复制本条链接">🔗</button></h2>`;
   });
+  // collapse the long-form PODCASTS section by default
+  out = out.replace(/<h3([^>]*)>([^<]*PODCASTS[^<]*)<\/h3>([\s\S]*)$/i, (_m, h3attrs, h3text, rest) =>
+    `<details class="podcast-section"><summary>🎙 ${h3text.trim()}</summary>${rest}</details>`
+  );
   return out;
 }
 
@@ -140,6 +144,17 @@ export async function buildSite(opts = {}) {
     : `<h1>暂无历史</h1>`;
   await writeFile(join(outDir, 'archive.html'),
     render(layout, { style, title: '归档 · AI Builders Daily', description: '历史日报归档', main: archiveMain }));
+
+  const aboutMain = `<p class="eyebrow">关于</p><h1>关于 AI Builders Daily</h1>
+<div class="digest-body">
+<p lang="zh">追踪 AI 领域真正在造东西的人——研究员、创始人、产品经理、工程师——而非只会搬运信息的网红。每天一期，双语对照。</p>
+<p lang="zh"><strong>数据来源</strong>：X/Twitter 上 26 位精选 builder、6 个顶级 AI 播客（Latent Space、No Priors、Training Data 等）、Anthropic 与 Claude 官方博客。全部公开内容，由 <a href="https://github.com/zarazhangrui/follow-builders">follow-builders</a> 中心化抓取。</p>
+<p lang="zh"><strong>生成方式</strong>：每天 08:00（北京时间），GitHub Actions 自动抓取 feed → 调智谱 GLM-4.6 remix 成双语摘要（判断式标题 + 主题合并）→ 生成网页 → 部署 GitHub Pages。无人为编辑干预。</p>
+<p lang="zh"><strong>摘要原则</strong>：每条给判断而非描述；同主题合并提升密度；信息量不足的转赞直接跳过；中文为信息等价改写，非逐字翻译。</p>
+<p lang="zh"><strong>订阅</strong>：<a href="feed.xml">RSS</a> · <a href="https://github.com/to-real/ai-builder-digest">GitHub 仓库</a></p>
+</div>`;
+  await writeFile(join(outDir, 'about.html'),
+    render(layout, { style, title: '关于 · AI Builders Daily', description: '关于本日报', main: aboutMain }));
 
   for (const p of posts) {
     const main = `<p class="eyebrow">日报</p><h1>${escapeHtml(p.title)}</h1><p class="post-meta">${p.date} · <a href="index.html">回最新</a> · <a href="archive.html">查归档</a></p><div class="digest-body">${buildToc(p.html)}${p.html}</div>`;
