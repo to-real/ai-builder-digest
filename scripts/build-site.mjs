@@ -14,6 +14,14 @@ export function slugDate(filename) {
   return DATE_RE.test(stem) ? stem : null;
 }
 
+// Post-process marked HTML: drop the duplicate digest-date <h1> (the page already
+// shows the title) and tag source-link paragraphs (lines starting with →) for styling.
+function enhanceHtml(html) {
+  return html
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '')
+    .replace(/<p>→\s/g, '<p class="src">→ ');
+}
+
 async function loadPosts(digestsDir) {
   if (!existsSync(digestsDir)) return [];
   const files = await readdir(digestsDir);
@@ -22,7 +30,7 @@ async function loadPosts(digestsDir) {
     const date = slugDate(f);
     if (!date) continue;
     const md = await readFile(join(digestsDir, f), 'utf-8');
-    const html = await marked.parse(md);
+    const html = enhanceHtml(await marked.parse(md));
     const firstH1 = md.match(/^#\s+(.+)$/m);
     posts.push({ date, md, html, title: firstH1 ? firstH1[1].trim() : `AI Builders Digest — ${date}` });
   }
