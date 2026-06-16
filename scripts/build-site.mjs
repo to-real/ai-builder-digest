@@ -51,6 +51,33 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function escapeXml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const SITE_URL = 'https://to-real.github.io/ai-builder-digest';
+
+function generateRss(posts) {
+  const items = posts.map(p => [
+    '    <item>',
+    `      <title>${escapeXml(p.title)}</title>`,
+    `      <link>${SITE_URL}/${p.date}.html</link>`,
+    `      <guid isPermaLink="true">${SITE_URL}/${p.date}.html</guid>`,
+    `      <pubDate>${new Date(p.date + 'T00:00:00Z').toUTCString()}</pubDate>`,
+    '    </item>'
+  ].join('\n')).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>AI Builders Digest</title>
+    <link>${SITE_URL}</link>
+    <description>每日双语 AI builder 日报 · by to-real</description>
+    <language>zh-CN</language>
+${items}
+  </channel>
+</rss>`;
+}
+
 export async function buildSite(opts = {}) {
   const digestsDir = opts.digestsDir ?? join(ROOT, 'digests');
   const outDir = opts.outDir ?? join(ROOT, 'site');
@@ -82,6 +109,8 @@ export async function buildSite(opts = {}) {
     await writeFile(join(outDir, `${p.date}.html`),
       render(layout, { style, title: `${p.title} · AI Builders Daily`, description: p.title, main }));
   }
+
+  await writeFile(join(outDir, 'feed.xml'), generateRss(posts), 'utf-8');
 
   return { posts: posts.length };
 }
