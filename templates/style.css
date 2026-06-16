@@ -168,3 +168,21 @@ blockquote {
 .lang-toggle button.active { color: var(--brand); border-color: var(--brand); }
 body.lang-en [lang="zh"] { display: none; }
 body.lang-zh [lang="en"] { display: none; }
+
+/* === table of contents chips === */
+.toc {
+  max-width: 720px; margin: 0 auto 24px; padding: 0 20px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 13px;
+}
+.toc-label {
+  color: var(--stone); letter-spacing: 0.5px;
+  margin-right: 4px; font-size: 12px; text-transform: uppercase;
+}
+.chip {
+  display: inline-block; padding: 2px 10px;
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--dark-warm); text-decoration: none;
+  background: var(--ivory); white-space: nowrap;
+}
+.chip:hover { border-color: var(--brand); color: var(--brand); }

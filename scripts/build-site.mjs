@@ -27,6 +27,16 @@ function enhanceHtml(html) {
     const lang = /[一-鿿]/.test(inner) ? 'zh' : 'en';
     return `<p${attrs || ''} lang="${lang}">${inner}</p>`;
   });
+  // add id anchors to each <h2> (builder/theme name) for the TOC chips
+  const seen = new Set();
+  let n = 0;
+  out = out.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (m, attrs, inner) => {
+    if (/\bid=/.test(attrs)) return m;
+    let slug = slugify(inner);
+    while (seen.has(slug)) slug = `${slugify(inner)}-${++n}`;
+    seen.add(slug);
+    return `<h2${attrs} id="${slug}">${inner}</h2>`;
+  });
   return out;
 }
 
@@ -59,6 +69,18 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function stripTags(s) {
+  return s.replace(/<[^>]+>/g, '');
+}
+
+function slugify(s) {
+  const cleaned = s.replace(/<[^>]+>/g, '');
+  return cleaned.toLowerCase()
+    .replace(/[^\w一-鿿]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'item';
+}
+
 function escapeXml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -86,6 +108,13 @@ ${items}
 </rss>`;
 }
 
+function buildToc(html) {
+  const matches = [...html.matchAll(/<h2[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/g)];
+  if (matches.length < 2) return '';
+  const chips = matches.map(m => `<a class="chip" href="#${m[1]}">${escapeHtml(stripTags(m[2]))}</a>`).join('');
+  return `<nav class="toc"><span class="toc-label">本期阵容</span>${chips}</nav>`;
+}
+
 export async function buildSite(opts = {}) {
   const digestsDir = opts.digestsDir ?? join(ROOT, 'digests');
   const outDir = opts.outDir ?? join(ROOT, 'site');
@@ -101,7 +130,7 @@ export async function buildSite(opts = {}) {
   const latest = posts[0];
 
   const indexMain = latest
-    ? `<p class="eyebrow">最新一期</p><h1>${escapeHtml(latest.title)}</h1><p class="post-meta">${latest.date} · 双语对照</p><div class="digest-body">${latest.html}</div>`
+    ? `<p class="eyebrow">最新一期</p><h1>${escapeHtml(latest.title)}</h1><p class="post-meta">${latest.date} · 双语对照</p><div class="digest-body">${buildToc(latest.html)}${latest.html}</div>`
     : `<h1>暂无日报</h1><p class="post-meta">第一期将在下次自动生成时发布。</p>`;
   await writeFile(join(outDir, 'index.html'),
     render(layout, { style, title: latest ? latest.title : 'AI Builders Daily', description: '每日 AI 建造者动态，双语对照', main: indexMain }));
@@ -113,7 +142,7 @@ export async function buildSite(opts = {}) {
     render(layout, { style, title: '归档 · AI Builders Daily', description: '历史日报归档', main: archiveMain }));
 
   for (const p of posts) {
-    const main = `<p class="eyebrow">日报</p><h1>${escapeHtml(p.title)}</h1><p class="post-meta">${p.date} · <a href="index.html">回最新</a> · <a href="archive.html">查归档</a></p><div class="digest-body">${p.html}</div>`;
+    const main = `<p class="eyebrow">日报</p><h1>${escapeHtml(p.title)}</h1><p class="post-meta">${p.date} · <a href="index.html">回最新</a> · <a href="archive.html">查归档</a></p><div class="digest-body">${buildToc(p.html)}${p.html}</div>`;
     await writeFile(join(outDir, `${p.date}.html`),
       render(layout, { style, title: `${p.title} · AI Builders Daily`, description: p.title, main }));
   }
