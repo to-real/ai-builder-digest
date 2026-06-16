@@ -96,21 +96,38 @@ export function buildSystemPrompt(prompts) {
   ].join('\n');
 }
 
-export async function remix(feedJsonStr, apiKey, prompts) {
-  const system = buildSystemPrompt(prompts);
+async function remixOnce(system, user, apiKey) {
   const res = await fetch(GLM_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: MODEL,
-      messages: [ { role: 'system', content: system }, { role: 'user', content: feedJsonStr } ],
+      messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],
       temperature: 0.5,
       stream: false
-    })
+    }),
+    signal: AbortSignal.timeout(170000)
   });
   if (!res.ok) throw new Error(`GLM API error ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? '';
+}
+
+export async function remix(feedJsonStr, apiKey, prompts) {
+  const system = buildSystemPrompt(prompts);
+  let lastErr;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await remixOnce(system, feedJsonStr, apiKey);
+    } catch (e) {
+      lastErr = e;
+      const transient = e.name === 'TimeoutError' || e.name === 'AbortError' ||
+        /fetch failed|timeout|econnreset|etimedout|socket hang up/i.test(e.message);
+      if (!transient || attempt === 3) throw e;
+      await new Promise(r => setTimeout(r, 5000 * attempt));
+    }
+  }
+  throw lastErr;
 }
 
 async function main() {
