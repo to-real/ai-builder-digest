@@ -1,7 +1,7 @@
 ---
 title: AI Builders Digest 流式分批生成设计
 date: 2026-07-14
-status: review
+status: approved
 ---
 
 # AI Builders Digest 流式分批生成设计
@@ -73,6 +73,9 @@ status: review
 ```json
 {
   "id": "...",
+  "type": "x | blog | podcast",
+  "author": "...",
+  "title": "...",
   "include": true,
   "role": "...",
   "judgment": "...",
@@ -84,7 +87,7 @@ status: review
 }
 ```
 
-响应采用流式传输，但必须在流结束后拼接、解析并按 schema 校验。缺少 `id`、`url`、核心判断或双语素材的记录视为无效，不能进入最终编辑阶段。
+响应采用流式传输，但必须在流结束后拼接、解析并按 schema 校验。缺少 `id`、`type`、作者、必要标题、角色、`url`、核心判断或双语素材的记录视为无效，不能进入最终编辑阶段。
 
 每个有效条目立即写入 `.digest-cache/items/<cache-key>.json`。缓存键由规范化内容哈希、内容类型、模型名和相关提示词哈希共同生成。内容或提示词变化时缓存自然失效。
 
