@@ -7,6 +7,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const GLM_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const MODEL = 'glm-4.6';
+const GLM_TIMEOUT_MS = 300_000;
+const GLM_MAX_ATTEMPTS = 2;
 
 const PROMPT_FILES = ['digest-intro', 'summarize-podcast', 'summarize-tweets', 'summarize-blogs', 'translate'];
 
@@ -106,7 +108,7 @@ async function remixOnce(system, user, apiKey) {
       temperature: 0.5,
       stream: false
     }),
-    signal: AbortSignal.timeout(170000)
+    signal: AbortSignal.timeout(GLM_TIMEOUT_MS)
   });
   if (!res.ok) throw new Error(`GLM API error ${res.status}: ${await res.text()}`);
   const data = await res.json();
@@ -116,15 +118,22 @@ async function remixOnce(system, user, apiKey) {
 export async function remix(feedJsonStr, apiKey, prompts) {
   const system = buildSystemPrompt(prompts);
   let lastErr;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= GLM_MAX_ATTEMPTS; attempt++) {
+    const startedAt = Date.now();
+    console.log(`[GLM] attempt ${attempt}/${GLM_MAX_ATTEMPTS} started (timeout ${GLM_TIMEOUT_MS}ms)`);
     try {
-      return await remixOnce(system, feedJsonStr, apiKey);
+      const result = await remixOnce(system, feedJsonStr, apiKey);
+      console.log(`[GLM] attempt ${attempt}/${GLM_MAX_ATTEMPTS} succeeded after ${Date.now() - startedAt}ms`);
+      return result;
     } catch (e) {
       lastErr = e;
+      console.warn(`[GLM] attempt ${attempt}/${GLM_MAX_ATTEMPTS} failed after ${Date.now() - startedAt}ms: ${e.name}: ${e.message}`);
       const transient = e.name === 'TimeoutError' || e.name === 'AbortError' ||
         /fetch failed|timeout|econnreset|etimedout|socket hang up/i.test(e.message);
-      if (!transient || attempt === 3) throw e;
-      await new Promise(r => setTimeout(r, 5000 * attempt));
+      if (!transient || attempt === GLM_MAX_ATTEMPTS) throw e;
+      const retryDelayMs = 5000 * attempt;
+      console.log(`[GLM] retrying in ${retryDelayMs}ms`);
+      await new Promise(r => setTimeout(r, retryDelayMs));
     }
   }
   throw lastErr;
